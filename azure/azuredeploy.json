@@ -1,5 +1,6 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/deploymentTemplate.json#",
+  
   "contentVersion": "1.0.0.0",
   "parameters": {
     "username": {
@@ -17,10 +18,13 @@
     },
    "preSharedKey": {
       "type": "securestring",
-      "metadata": {
-        "description": "IPsec Pre-Shared Key for VPN"
-      }
-    },
+      "metadata": {"description": "IPsec Pre-Shared Key for VPN"}
+      },
+    "onPremGwIP": {
+                    "type": "string",
+                    "metadata" : {"description": "Public IP of OnPremise IPSec VPN Device"}
+                  },
+    
     "image": {
       "type": "string",
       "allowedValues": [
@@ -28,31 +32,33 @@
         "ubuntu1604",
         "debian9"
       ],
-      "defaultValue": "debian9",
+      "defaultValue": "ubuntu1804",
       "metadata": {
         "description": "OS to use. Debian 9 or Ubuntu 18.04/16.04 LTS"
       }
     },
     "VMSize": {
       "type": "string",
-      "defaultValue": "Standard_B1s",
+      "defaultValue": "Standard_D1_v2",
       "allowedValues": [
-        "Standard_B1ls",
-        "Standard_B1s",
-        "Standard_B1ms",
-        "Standard_B2s",
-        "Standard_B2ms"
+        "Standard_A1_v2",
+        "Standard_D1_v2",
+        "Standard_D2_v2"
       ],
       "metadata": {
         "description": "The size of the Virtual Machine."
       }
-    }
+    },
+    "virtualNetworkName" : {
+                              "type": "string",
+                              "metadata" : {"description": "Please enter existing virtual network name to place this VM"}
+                           }
   },
   "variables": {
     "quote": "'",
     "location": "[resourceGroup().location]",
-    "vmName": "vpnserver",
-    "virtualNetworkName": "vpnVnet",
+    "vmName": "vpn-gw",
+    "virtualNetworkName": "[parameters('virtualNetworkName')]",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "VPNSubnet",
     "subnetPrefix": "10.0.1.0/24",
@@ -79,8 +85,11 @@
       "sku": "9",
       "version": "latest"
     },
-    "installScriptURL": "https://raw.githubusercontent.com/hwdsl2/setup-ipsec-vpn/master/azure/install.sh",
-    "installCommand": "[concat('sh install.sh ', variables('quote'), parameters('preSharedKey'), variables('quote'), ' ', variables('quote'), parameters('username'), variables('quote'), ' ', variables('quote'), parameters('password'), variables('quote'))]"
+    "installScriptURL": "https://raw.githubusercontent.com/werton13/setup-ipsec-vpn/master/azure/install.sh",
+    "installCommand": "[concat('sh install.sh ', variables('quote'), parameters('preSharedKey'), variables('quote'),
+                                            ' ', variables('quote'), parameters('username'), variables('quote'), 
+                                            ' ', variables('quote'), parameters('password'), variables('quote'),
+                                            ' ', variables('quote'), parameters('onPremGwIP'), variables('quote'))]"
   },
   "resources": [
     {
@@ -97,30 +106,7 @@
       },
       "kind": "Storage"
     },
-    {
-      "apiVersion": "[variables('apiVersion')]",
-      "type": "Microsoft.Network/virtualNetworks",
-      "name": "[variables('virtualNetworkName')]",
-      "location": "[variables('location')]",
-      "tags": {
-        "displayName": "VirtualNetwork"
-      },
-      "properties": {
-        "addressSpace": {
-          "addressPrefixes": [
-            "[variables('addressPrefix')]"
-          ]
-        },
-        "subnets": [
-          {
-            "name": "[variables('subnetName')]",
-            "properties": {
-              "addressPrefix": "[variables('subnetPrefix')]"
-            }
-          }
-        ]
-      }
-    },
+
     {
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/networkInterfaces",
