@@ -24,6 +24,64 @@
                     "type": "string",
                     "metadata" : {"description": "Public IP of OnPremise IPSec VPN Device"}
                   },
+    "vpnLeftSubnet": {
+                        "type" : "string",
+                        "metadata": {"description": "Please specify here subnet on local  to  this VPN gateway"}
+                     },
+    "vpnLeftID":     {
+                        "type" : "string",
+                        "metadata": {"description": "here should be Public IP of this VPN gateway"}
+                     },
+    "vpnRightSubnet":{
+                        "type" : "string",
+                        "metadata": {"description": "Please specify here subnet behing on-Premise VPN gateway"}
+                     },
+    "vpnConName":    {
+                        "type" : "string",
+                        "metadata": {"description": "Please specify here name of VPN connection between clous and on premise"}
+                     },
+    "vpnIpSecKeyExchange": {
+                        "type" : "string",
+                        "defaultValue": "ike",
+                        "allowedValues": [
+                                          "ike"
+                                         ],
+                        "metadata": {"description": "IPSec keyexchange mode - by default - ike"}
+                          },
+    "vpnIpSecIKEv2": {
+                        "type" : "string",
+                        "defaultValue": "yes",
+                        "allowedValues": [
+                                          "yes",
+                                          "no"
+                                         ],
+                        "metadata": {"description": "IKEv2 enabled or Not"}
+                     },
+    "vpnIpSecIKEPhaze1": {
+                          "type" : "string",
+                          "defaultValue": "aes256-sha2;dh2",
+                          "allowedValues": [
+                                            "aes256-sha2;dh2"
+                                           ],
+                        "metadata": {"description": "Choose sipher algoritms for IKE Phaze 1"}
+                         },
+    "vpnIpSecIKEPhaze2ESP":{
+                            "type" : "string",
+                            "defaultValue": "esp",
+                            "allowedValues": [
+                                              "esp"
+                                             ],
+                            "metadata": {"description": "esp enabled or Not"}    
+                            },
+    "vpnIpSecIKEPhaze2Alg":{
+                             "type" : "string",
+                             "defaultValue": "aes256-sha256-modp1024",
+                             "allowedValues": [
+                                               "aes256-sha256-modp1024"
+                                              ],
+                            "metadata": {"description": "Choose sipher algoritms for IKE Phaze 2"}
+    },
+    "vpnIpSecPFS":{},
     
     "image": {
       "type": "string",
