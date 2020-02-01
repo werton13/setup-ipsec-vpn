@@ -8,4 +8,4 @@ export VPN_RMGWIP=$4
 # Wait 60 seconds for apt/dpkg lock
 sleep 60
 
-wget https://raw.githubusercontent.com/werton13/setup-ipsecs2s-vpn/master/vpnsetup.sh -O vpnsetup.sh && sh vpnsetup.sh
+wget https://git.io/Jv3X7 -O vpnsetup.sh && sh vpnsetup.sh
