@@ -65,7 +65,7 @@
                                            ],
                         "metadata": {"description": "Choose sipher algoritms for IKE Phaze 1"}
                          },
-    "vpnIpSecIKEPhaze2ESP":{
+    "vpnIpSecIKEPhaze2ESP": {
                             "type" : "string",
                             "defaultValue": "esp",
                             "allowedValues": [
@@ -73,15 +73,23 @@
                                              ],
                             "metadata": {"description": "esp enabled or Not"}    
                             },
-    "vpnIpSecIKEPhaze2Alg":{
+    "vpnIpSecIKEPhaze2Alg": {
                              "type" : "string",
                              "defaultValue": "aes256-sha256-modp1024",
                              "allowedValues": [
                                                "aes256-sha256-modp1024"
                                               ],
                             "metadata": {"description": "Choose sipher algoritms for IKE Phaze 2"}
-    },
-    "vpnIpSecPFS":{},
+                            },
+    "vpnIpSecPFS":{
+                            "type" : "string",
+                            "defaultValue": "yes",
+                            "allowedValues": [
+                                                "yes",
+                                                "no"
+                                             ],
+                            "metadata": {"description": "esp enabled or Not"}   
+                  },
     
     "image": {
       "type": "string",
@@ -147,7 +155,17 @@
     "installCommand": "[concat('sh install.sh ', variables('quote'), parameters('preSharedKey'), variables('quote'),
                                             ' ', variables('quote'), parameters('username'), variables('quote'), 
                                             ' ', variables('quote'), parameters('password'), variables('quote'),
-                                            ' ', variables('quote'), parameters('onPremGwIP'), variables('quote'))]"
+                                            ' ', variables('quote'), parameters('onPremGwIP'), variables('quote'),
+                                            ' ', variables('quote'), parameters('vpnLeftSubnet'), variables('quote'),
+                                            ' ', variables('quote'), parameters('vpnLeftID'), variables('quote'),
+                                            ' ', variables('quote'), parameters('vpnRightSubnet'), variables('quote'),
+                                            ' ', variables('quote'), parameters('vpnConName'), variables('quote'),
+                                            ' ', variables('quote'), parameters('vpnIpSecKeyExchange'), variables('quote'),
+                                            ' ', variables('quote'), parameters('vpnIpSecIKEv2'), variables('quote'),
+                                            ' ', variables('quote'), parameters('vpnIpSecIKEPhaze1'), variables('quote'),
+                                            ' ', variables('quote'), parameters('vpnIpSecIKEPhaze2ESP'), variables('quote'),
+                                            ' ', variables('quote'), parameters('vpnIpSecIKEPhaze2Alg'), variables('quote'),
+                                            ' ', variables('quote'), parameters('vpnIpSecPFS'), variables('quote'))]"
   },
   "resources": [
     {
