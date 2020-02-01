@@ -1,3 +1,21 @@
+# I workin on a litle modifications to this script to make it more parametrizied
+# as i intend to call this scrip from my ARM template in which i want to let the user choose IPSec parameters, 
+# remote GW IP and specify on-premise and cloud related networks
+
+
+werton13
+/
+setup-ipsecs2s-vpn
+forked from hwdsl2/setup-ipsec-vpn
+0
+03.4k
+ Code Pull requests 0 Actions Projects 0 Security Insights Settings
+setup-ipsecs2s-vpn/vpnsetup.sh
+@hwdsl2 hwdsl2 Improve OS detection
+4360737 19 days ago
+@hwdsl2@dsoprea@aofei@kendfinger@abuango@DL6ER
+Executable File  524 lines (434 sloc)  15 KB
+  
 #!/bin/sh
 #
 # Script for automatic setup of an IPsec VPN server on Ubuntu LTS and Debian.
@@ -20,13 +38,25 @@
 # =====================================================
 
 # Define your own values for these variables
-# - IPsec pre-shared key, VPN username and password
+# - IPsec pre-shared key, VPN username and password (if not defined  - will use values from ENV variables setted from parent script)
 # - All values MUST be placed inside 'single quotes'
 # - DO NOT use these special characters within values: \ " '
 
 YOUR_IPSEC_PSK=''
 YOUR_USERNAME=''
 YOUR_PASSWORD=''
+YOUR_RMGWIP=''
+YOUR_LEFTSUBNET=''
+YOUR_LEFTID=''
+YOUR_RIGHTSUBNET=''
+YOUR_RIGHTID=''
+YOUR_CONNAME=''
+IPSEC_KEYEXCHNAGE=''
+IPSEC_IKEV2=''
+IPSEC_IKEPHAZE1=''
+IPSEC_IKEPHAZE2ESP=''
+IPSEC_IKEPHAZE2ALG=''
+IPSEC_PFS=''
 
 # Important notes:   https://git.io/vpnnotes
 # Setup VPN clients: https://git.io/vpnclients
@@ -94,8 +124,23 @@ fi
 [ -n "$YOUR_IPSEC_PSK" ] && VPN_IPSEC_PSK="$YOUR_IPSEC_PSK"
 [ -n "$YOUR_USERNAME" ] && VPN_USER="$YOUR_USERNAME"
 [ -n "$YOUR_PASSWORD" ] && VPN_PASSWORD="$YOUR_PASSWORD"
+[ -n "$YOUR_RMGWIP" ] && VPN_RMGWIP="$YOUR_RMGWIP"
 
-if [ -z "$VPN_IPSEC_PSK" ] && [ -z "$VPN_USER" ] && [ -z "$VPN_PASSWORD" ]; then
+[ -n "$YOUR_LEFTSUBNET"] && VPN_LEFTSUBNET="$YOUR_LEFTSUBNET"
+[ -n "$YOUR_LEFTID"] && VPN_LEFTID="$YOUR_LEFTID"
+[ -n "$YOUR_RIGHTSUBNET"] && VPN_RIGHTSUBNET="$YOUR_RIGHTSUBNET"
+[ -n "$YOUR_RIGHTID"] && VPN_RIGHTID="$YOUR_RMGWIP"
+
+[ -n "$YOUR_CONNAME"] && VPN_CONNAME="$YOUR_CONNAME"
+[ -n "$IPSEC_KEYEXCHNAGE"] && VPN_IPSEC_KEYEXCHANGE="$IPSEC_KEYEXCHNAGE"
+[ -n "$IPSEC_IKEV2"] && VPN_IPSEC_IKEV2="$IPSEC_IKEV2"
+[ -n "$IPSEC_IKEPHAZE1"] && VPN_IPSEC_IKEPHAZE1="$IPSEC_IKEPHAZE1"
+[ -n "$IPSEC_IKEPHAZE2ESP"] && VPN_IPSEC_IKEPHAZE2ESP="$IPSEC_IKEPHAZE2ESP"
+[ -n "$IPSEC_IKEPHAZE2ALG"] && VPN_IPSEC_IKEPHAZE2ALG="$IPSEC_IKEPHAZE2ALG"
+[ -n "$IPSEC_PFS"] && VPN_IPSEC_PFS="$IPSEC_PFS"
+
+
+if [ -z "$VPN_IPSEC_PSK" ] && [ -z "$VPN_USER" ] && [ -z "$VPN_PASSWORD" ] && [ -z $YOUR_RMGWIP]; then
   bigecho "VPN credentials not set by user. Generating random PSK and password..."
   VPN_IPSEC_PSK=$(LC_CTYPE=C tr -dc 'A-HJ-NPR-Za-km-z2-9' < /dev/urandom | head -c 20)
   VPN_USER=vpnuser
@@ -205,11 +250,11 @@ fi
 
 bigecho "Creating VPN configuration..."
 
-L2TP_NET=${VPN_L2TP_NET:-'192.168.42.0/24'}
-L2TP_LOCAL=${VPN_L2TP_LOCAL:-'192.168.42.1'}
-L2TP_POOL=${VPN_L2TP_POOL:-'192.168.42.10-192.168.42.250'}
-XAUTH_NET=${VPN_XAUTH_NET:-'192.168.43.0/24'}
-XAUTH_POOL=${VPN_XAUTH_POOL:-'192.168.43.10-192.168.43.250'}
+#L2TP_NET=${VPN_L2TP_NET:-'192.168.42.0/24'}
+#L2TP_LOCAL=${VPN_L2TP_LOCAL:-'192.168.42.1'}
+#L2TP_POOL=${VPN_L2TP_POOL:-'192.168.42.10-192.168.42.250'}
+#XAUTH_NET=${VPN_XAUTH_NET:-'192.168.43.0/24'}
+#XAUTH_POOL=${VPN_XAUTH_POOL:-'192.168.43.10-192.168.43.250'}
 DNS_SRV1=${VPN_DNS_SRV1:-'8.8.8.8'}
 DNS_SRV2=${VPN_DNS_SRV2:-'8.8.4.4'}
 DNS_SRVS="\"$DNS_SRV1 $DNS_SRV2\""
@@ -221,50 +266,35 @@ cat > /etc/ipsec.conf <<EOF
 version 2.0
 
 config setup
-  virtual-private=%v4:10.0.0.0/8,%v4:192.168.0.0/16,%v4:172.16.0.0/12,%v4:!$L2TP_NET,%v4:!$XAUTH_NET
+  interfaces="ipsec0=ens160"
   protostack=netkey
-  interfaces=%defaultroute
-  uniqueids=no
-
-conn shared
-  left=%defaultroute
-  leftid=$PUBLIC_IP
-  right=%any
-  encapsulation=yes
+  logfile=/var/log/pluto.log
+  plutodebug="all crypt"
+conn $VPN_CONNAME
   authby=secret
-  pfs=no
-  rekey=no
-  keyingtries=5
+  left=%defaultroute
+  leftid=$VPN_RMGWIP
+  leftsubnet=$VPN_LEFTSUBNET
+
+  right=$VPN_RMGWIP
+  rightid=$VPN_RMGWIP
+  rightsubnet=$VPN_RIGHTSUBNET
+
+  keyexchange=$VPN_IPSEC_KEYEXCHANGE
+  ikev2=$VPN_IPSEC_IKEV2
+  ike=$VPN_IPSEC_IKEPHAZE1
+  ikelifetime=86400s
+
+  phase2=$VPN_IPSEC_IKEPHAZE2ESP
+  phase2alg=$VPN_IPSEC_IKEPHAZE2ALG
+  keyingtries=3
+  pfs=$VPN_IPSEC_PFS
+  rekey=yes
   dpddelay=30
   dpdtimeout=120
-  dpdaction=clear
-  ikev2=never
-  ike=aes256-sha2,aes128-sha2,aes256-sha1,aes128-sha1,aes256-sha2;modp1024,aes128-sha1;modp1024
-  phase2alg=aes_gcm-null,aes128-sha1,aes256-sha1,aes256-sha2_512,aes128-sha2,aes256-sha2
-  sha2-truncbug=no
-
-conn l2tp-psk
+  dpdaction=restart
   auto=add
-  leftprotoport=17/1701
-  rightprotoport=17/%any
-  type=transport
-  phase2=esp
-  also=shared
-
-conn xauth-psk
-  auto=add
-  leftsubnet=0.0.0.0/0
-  rightaddresspool=$XAUTH_POOL
-  modecfgdns=$DNS_SRVS
-  leftxauthserver=yes
-  rightxauthclient=yes
-  leftmodecfgserver=yes
-  rightmodecfgclient=yes
-  modecfgpull=yes
-  xauthby=file
-  ike-frag=yes
-  cisco-unity=yes
-  also=shared
+  type=tunnel
 EOF
 
 if uname -m | grep -qi '^arm'; then
@@ -274,7 +304,7 @@ fi
 # Specify IPsec PSK
 conf_bk "/etc/ipsec.secrets"
 cat > /etc/ipsec.secrets <<EOF
-%any  %any  : PSK "$VPN_IPSEC_PSK"
+$VPN_RMGWIP  $VPN_RIGHTID  : PSK "$VPN_IPSEC_PSK"
 EOF
 
 # Create xl2tpd config
@@ -282,7 +312,6 @@ conf_bk "/etc/xl2tpd/xl2tpd.conf"
 cat > /etc/xl2tpd/xl2tpd.conf <<EOF
 [global]
 port = 1701
-
 [lns default]
 ip range = $L2TP_POOL
 local ip = $L2TP_LOCAL
@@ -341,13 +370,11 @@ if ! grep -qs "hwdsl2 VPN script" /etc/sysctl.conf; then
     SHM_ALL=268435456
   fi
 cat >> /etc/sysctl.conf <<EOF
-
 # Added by hwdsl2 VPN script
 kernel.msgmnb = 65536
 kernel.msgmax = 65536
 kernel.shmmax = $SHM_MAX
 kernel.shmall = $SHM_ALL
-
 net.ipv4.ip_forward = 1
 net.ipv4.conf.all.accept_source_route = 0
 net.ipv4.conf.all.accept_redirects = 0
@@ -359,7 +386,6 @@ net.ipv4.conf.default.send_redirects = 0
 net.ipv4.conf.default.rp_filter = 0
 net.ipv4.conf.$NET_IFACE.send_redirects = 0
 net.ipv4.conf.$NET_IFACE.rp_filter = 0
-
 net.core.wmem_max = 12582912
 net.core.rmem_max = 12582912
 net.ipv4.tcp_rmem = 10240 87380 12582912
@@ -435,17 +461,13 @@ cat > /etc/systemd/system/load-iptables-rules.service <<'EOF'
 [Unit]
 Description = Load /etc/iptables.rules
 DefaultDependencies=no
-
 Before=network-pre.target
 Wants=network-pre.target
-
 Wants=systemd-modules-load.service local-fs.target
 After=systemd-modules-load.service local-fs.target
-
 [Service]
 Type=oneshot
 ExecStart=/etc/network/if-pre-up.d/iptablesload
-
 [Install]
 WantedBy=multi-user.target
 EOF
@@ -466,7 +488,6 @@ if ! grep -qs "hwdsl2 VPN script" /etc/rc.local; then
     echo '#!/bin/sh' > /etc/rc.local
   fi
 cat >> /etc/rc.local <<'EOF'
-
 # Added by hwdsl2 VPN script
 (sleep 15
 service ipsec restart
@@ -495,25 +516,17 @@ service ipsec restart 2>/dev/null
 service xl2tpd restart 2>/dev/null
 
 cat <<EOF
-
 ================================================
-
 IPsec VPN server is now ready for use!
-
 Connect to your new VPN with these details:
-
 Server IP: $PUBLIC_IP
 IPsec PSK: $VPN_IPSEC_PSK
 Username: $VPN_USER
 Password: $VPN_PASSWORD
-
 Write these down. You'll need them to connect!
-
 Important notes:   https://git.io/vpnnotes
 Setup VPN clients: https://git.io/vpnclients
-
 ================================================
-
 EOF
 
 }
@@ -522,3 +535,15 @@ EOF
 vpnsetup "$@"
 
 exit 0
+© 2020 GitHub, Inc.
+Terms
+Privacy
+Security
+Status
+Help
+Contact GitHub
+Pricing
+API
+Training
+Blog
+About
