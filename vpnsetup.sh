@@ -130,20 +130,20 @@ fi
 #just for diagnostics, will comment out this later
 touch /tmp/envdiag.log
 
-echo VPN_IPSEC_PSK >> /tmp/envdiag.log
-echo VPN_USER >> /tmp/envdiag.log
-echo VPN_PASSWORD >> /tmp/envdiag.log
-echo VPN_RMGWI >> /tmp/envdiag.log
-echo VPN_LEFTSUBNET >> /tmp/envdiag.log
-echo VPN_LEFTI >> /tmp/envdiag.log
-echo VPN_RIGHTSUBNE >> /tmp/envdiag.log
-echo VPN_CONNAME >> /tmp/envdiag.log
-echo VPN_IPSEC_KEYEXCHANGE >> /tmp/envdiag.log
-echo VPN_IPSEC_IKEV2= >> /tmp/envdiag.log
-echo VPN_IPSEC_IKEPHAZE1= >> /tmp/envdiag.log
-echo VPN_IPSEC_IKEPHAZE2ESP= >> /tmp/envdiag.log
-echo VPN_IPSEC_IKEPHAZE2ALG= >> /tmp/envdiag.log
-echo VPN_IPSEC_PFS >> /tmp/envdiag.log
+echo $VPN_IPSEC_PSK >> /tmp/envdiag.log
+echo $VPN_USER >> /tmp/envdiag.log
+echo $VPN_PASSWORD >> /tmp/envdiag.log
+echo $VPN_RMGWID >> /tmp/envdiag.log
+echo $VPN_LEFTSUBNET >> /tmp/envdiag.log
+echo $VPN_LEFTID >> /tmp/envdiag.log
+echo $VPN_RIGHTSUBNET >> /tmp/envdiag.log
+echo $VPN_CONNAME >> /tmp/envdiag.log
+echo $VPN_IPSEC_KEYEXCHANGE >> /tmp/envdiag.log
+echo $VPN_IPSEC_IKEV2= >> /tmp/envdiag.log
+echo $VPN_IPSEC_IKEPHAZE1= >> /tmp/envdiag.log
+echo $VPN_IPSEC_IKEPHAZE2ESP= >> /tmp/envdiag.log
+echo $VPN_IPSEC_IKEPHAZE2ALG= >> /tmp/envdiag.log
+echo $VPN_IPSEC_PFS >> /tmp/envdiag.log
 
 if [ -z "$VPN_IPSEC_PSK" ] && [ -z "$VPN_USER" ] && [ -z "$VPN_PASSWORD" ] && [ -z $YOUR_RMGWIP]; then
   bigecho "VPN credentials not set by user. Generating random PSK and password..."
