@@ -1,6 +1,8 @@
-# I workin on a litle modifications to this script to make it more parametrizied
+# I'm still working on a litle modifications to this script to make it more parametrizied
 # as i intend to call this scrip from my ARM template in which i want to let the user choose IPSec parameters, 
 # remote GW IP and specify on-premise and cloud related networks
+
+
   
 #!/bin/sh
 #
@@ -28,21 +30,21 @@
 # - All values MUST be placed inside 'single quotes'
 # - DO NOT use these special characters within values: \ " '
 
-YOUR_IPSEC_PSK=''
-YOUR_USERNAME=''
-YOUR_PASSWORD=''
-YOUR_RMGWIP=''
-YOUR_LEFTSUBNET=''
-YOUR_LEFTID=''
-YOUR_RIGHTSUBNET=''
-YOUR_RIGHTID=''
-YOUR_CONNAME=''
-IPSEC_KEYEXCHNAGE=''
-IPSEC_IKEV2=''
-IPSEC_IKEPHAZE1=''
-IPSEC_IKEPHAZE2ESP=''
-IPSEC_IKEPHAZE2ALG=''
-IPSEC_PFS=''
+#YOUR_IPSEC_PSK=''
+#YOUR_USERNAME=''
+#YOUR_PASSWORD=''
+#YOUR_RMGWIP=''
+#YOUR_LEFTSUBNET=''
+#YOUR_LEFTID=''
+#YOUR_RIGHTSUBNET=''
+#YOUR_RIGHTID=''
+#YOUR_CONNAME=''
+#IPSEC_KEYEXCHNAGE=''
+#IPSEC_IKEV2=''
+#IPSEC_IKEPHAZE1=''
+#IPSEC_IKEPHAZE2ESP=''
+#IPSEC_IKEPHAZE2ALG=''
+#IPSEC_PFS=''
 
 # Important notes:   https://git.io/vpnnotes
 # Setup VPN clients: https://git.io/vpnclients
@@ -107,24 +109,41 @@ else
   NET_IFACE=eth0
 fi
 
-[ -n "$YOUR_IPSEC_PSK" ] && VPN_IPSEC_PSK="$YOUR_IPSEC_PSK"
-[ -n "$YOUR_USERNAME" ] && VPN_USER="$YOUR_USERNAME"
-[ -n "$YOUR_PASSWORD" ] && VPN_PASSWORD="$YOUR_PASSWORD"
-[ -n "$YOUR_RMGWIP" ] && VPN_RMGWIP="$YOUR_RMGWIP"
+#[ -n "$YOUR_IPSEC_PSK" ] && VPN_IPSEC_PSK="$YOUR_IPSEC_PSK"
+#[ -n "$YOUR_USERNAME" ] && VPN_USER="$YOUR_USERNAME"
+#[ -n "$YOUR_PASSWORD" ] && VPN_PASSWORD="$YOUR_PASSWORD"
+#[ -n "$YOUR_RMGWIP" ] && VPN_RMGWIP="$YOUR_RMGWIP"
 
-[ -n "$YOUR_LEFTSUBNET"] && VPN_LEFTSUBNET="$YOUR_LEFTSUBNET"
-[ -n "$YOUR_LEFTID"] && VPN_LEFTID="$YOUR_LEFTID"
-[ -n "$YOUR_RIGHTSUBNET"] && VPN_RIGHTSUBNET="$YOUR_RIGHTSUBNET"
-[ -n "$YOUR_RIGHTID"] && VPN_RIGHTID="$YOUR_RMGWIP"
+#[ -n "$YOUR_LEFTSUBNET"] && VPN_LEFTSUBNET="$YOUR_LEFTSUBNET"
+#[ -n "$YOUR_LEFTID"] && VPN_LEFTID="$YOUR_LEFTID"
+#[ -n "$YOUR_RIGHTSUBNET"] && VPN_RIGHTSUBNET="$YOUR_RIGHTSUBNET"
+#[ -n "$YOUR_RIGHTID"] && VPN_RIGHTID="$YOUR_RMGWIP"
 
-[ -n "$YOUR_CONNAME"] && VPN_CONNAME="$YOUR_CONNAME"
-[ -n "$IPSEC_KEYEXCHNAGE"] && VPN_IPSEC_KEYEXCHANGE="$IPSEC_KEYEXCHNAGE"
-[ -n "$IPSEC_IKEV2"] && VPN_IPSEC_IKEV2="$IPSEC_IKEV2"
-[ -n "$IPSEC_IKEPHAZE1"] && VPN_IPSEC_IKEPHAZE1="$IPSEC_IKEPHAZE1"
-[ -n "$IPSEC_IKEPHAZE2ESP"] && VPN_IPSEC_IKEPHAZE2ESP="$IPSEC_IKEPHAZE2ESP"
-[ -n "$IPSEC_IKEPHAZE2ALG"] && VPN_IPSEC_IKEPHAZE2ALG="$IPSEC_IKEPHAZE2ALG"
-[ -n "$IPSEC_PFS"] && VPN_IPSEC_PFS="$IPSEC_PFS"
+#[ -n "$YOUR_CONNAME"] && VPN_CONNAME="$YOUR_CONNAME"
+#[ -n "$IPSEC_KEYEXCHNAGE"] && VPN_IPSEC_KEYEXCHANGE="$IPSEC_KEYEXCHNAGE"
+#[ -n "$IPSEC_IKEV2"] && VPN_IPSEC_IKEV2="$IPSEC_IKEV2"
+#[ -n "$IPSEC_IKEPHAZE1"] && VPN_IPSEC_IKEPHAZE1="$IPSEC_IKEPHAZE1"
+#[ -n "$IPSEC_IKEPHAZE2ESP"] && VPN_IPSEC_IKEPHAZE2ESP="$IPSEC_IKEPHAZE2ESP"
+#[ -n "$IPSEC_IKEPHAZE2ALG"] && VPN_IPSEC_IKEPHAZE2ALG="$IPSEC_IKEPHAZE2ALG"
+#[ -n "$IPSEC_PFS"] && VPN_IPSEC_PFS="$IPSEC_PFS"
 
+#just for diagnostics, will comment out this later
+touch /tmp/envdiag.log
+
+echo VPN_IPSEC_PSK >> /tmp/envdiag.log
+echo VPN_USER >> /tmp/envdiag.log
+echo VPN_PASSWORD >> /tmp/envdiag.log
+echo VPN_RMGWI >> /tmp/envdiag.log
+echo VPN_LEFTSUBNET >> /tmp/envdiag.log
+echo VPN_LEFTI >> /tmp/envdiag.log
+echo VPN_RIGHTSUBNE >> /tmp/envdiag.log
+echo VPN_CONNAME >> /tmp/envdiag.log
+echo VPN_IPSEC_KEYEXCHANGE >> /tmp/envdiag.log
+echo VPN_IPSEC_IKEV2= >> /tmp/envdiag.log
+echo VPN_IPSEC_IKEPHAZE1= >> /tmp/envdiag.log
+echo VPN_IPSEC_IKEPHAZE2ESP= >> /tmp/envdiag.log
+echo VPN_IPSEC_IKEPHAZE2ALG= >> /tmp/envdiag.log
+echo VPN_IPSEC_PFS >> /tmp/envdiag.log
 
 if [ -z "$VPN_IPSEC_PSK" ] && [ -z "$VPN_USER" ] && [ -z "$VPN_PASSWORD" ] && [ -z $YOUR_RMGWIP]; then
   bigecho "VPN credentials not set by user. Generating random PSK and password..."
@@ -521,15 +540,4 @@ EOF
 vpnsetup "$@"
 
 exit 0
-© 2020 GitHub, Inc.
-Terms
-Privacy
-Security
-Status
-Help
-Contact GitHub
-Pricing
-API
-Training
-Blog
-About
+
