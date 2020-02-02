@@ -1,352 +1,370 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/deploymentTemplate.json#",
-  
-  "contentVersion": "1.0.0.0",
-  "parameters": {
-    "username": {
-      "type": "string",
-      "minLength": 1,
-      "metadata": {
-        "description": "Username for VPN and SSH"
-      }
-    },
-    "password": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Password for VPN and SSH"
-      }
-    },
-   "preSharedKey": {
-      "type": "securestring",
-      "metadata": {"description": "IPsec Pre-Shared Key for VPN"}
-      },
-    "onPremGwIP": {
-                    "type": "string",
-                    "metadata" : {"description": "Public IP of OnPremise IPSec VPN Device"}
-                  },
-    "vpnLeftSubnet": {
-                        "type" : "string",
-                        "metadata": {"description": "Please specify here subnet on local  to  this VPN gateway"}
-                     },
-    "vpnLeftID":     {
-                        "type" : "string",
-                        "metadata": {"description": "here should be Public IP of this VPN gateway"}
-                     },
-    "vpnRightSubnet":{
-                        "type" : "string",
-                        "metadata": {"description": "Please specify here subnet behing on-Premise VPN gateway"}
-                     },
-    "vpnConName":    {
-                        "type" : "string",
-                        "metadata": {"description": "Please specify here name of VPN connection between clous and on premise"}
-                     },
-    "vpnIpSecKeyExchange": {
-                        "type" : "string",
-                        "defaultValue": "ike",
-                        "allowedValues": [
-                                          "ike"
-                                         ],
-                        "metadata": {"description": "IPSec keyexchange mode - by default - ike"}
-                          },
-    "vpnIpSecIKEv2": {
-                        "type" : "string",
-                        "defaultValue": "yes",
-                        "allowedValues": [
-                                          "yes",
-                                          "no"
-                                         ],
-                        "metadata": {"description": "IKEv2 enabled or Not"}
-                     },
-    "vpnIpSecIKEPhaze1": {
-                          "type" : "string",
-                          "defaultValue": "aes256-sha2;dh2",
-                          "allowedValues": [
-                                            "aes256-sha2;dh2"
-                                           ],
-                        "metadata": {"description": "Choose sipher algoritms for IKE Phaze 1"}
-                         },
-    "vpnIpSecIKEPhaze2ESP": {
-                            "type" : "string",
-                            "defaultValue": "esp",
-                            "allowedValues": [
-                                              "esp"
-                                             ],
-                            "metadata": {"description": "esp enabled or Not"}    
-                            },
-    "vpnIpSecIKEPhaze2Alg": {
-                             "type" : "string",
-                             "defaultValue": "aes256-sha256-modp1024",
-                             "allowedValues": [
-                                               "aes256-sha256-modp1024"
-                                              ],
-                            "metadata": {"description": "Choose sipher algoritms for IKE Phaze 2"}
-                            },
-    "vpnIpSecPFS":{
-                            "type" : "string",
-                            "defaultValue": "yes",
-                            "allowedValues": [
-                                                "yes",
-                                                "no"
-                                             ],
-                            "metadata": {"description": "esp enabled or Not"}   
-                  },
-    
-    "image": {
-      "type": "string",
-      "allowedValues": [
-        "ubuntu1804",
-        "ubuntu1604",
-        "debian9"
-      ],
-      "defaultValue": "ubuntu1804",
-      "metadata": {
-        "description": "OS to use. Debian 9 or Ubuntu 18.04/16.04 LTS"
-      }
-    },
-    "VMSize": {
-      "type": "string",
-      "defaultValue": "Standard_D1_v2",
-      "allowedValues": [
-        "Standard_A1_v2",
-        "Standard_D1_v2",
-        "Standard_D2_v2"
-      ],
-      "metadata": {
-        "description": "The size of the Virtual Machine."
-      }
-    },
-    "virtualNetworkName" : {
-                              "type": "string",
-                              "metadata" : {"description": "Please enter existing virtual network name to place this VM"}
-                           }
-  },
-  "variables": {
-    "quote": "'",
-    "location": "[resourceGroup().location]",
-    "vmName": "vpn-gw",
-    "virtualNetworkName": "[parameters('virtualNetworkName')]",
-    "addressPrefix": "10.0.0.0/16",
-    "subnetName": "VPNSubnet",
-    "subnetPrefix": "10.0.1.0/24",
-    "apiVersion": "2015-06-15",
-    "storageName": "[concat(uniqueString(resourceGroup().id), 'vpnsa')]",
-    "vhdStorageType": "Standard_LRS",
-    "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
-    "SubnetRef": "[concat(variables('vnetId'), '/subnets/', variables('subnetName'))]",
-    "ubuntu1804": {
-      "publisher": "Canonical",
-      "offer": "UbuntuServer",
-      "sku": "18.04-LTS",
-      "version": "latest"
-    },
-    "ubuntu1604": {
-      "publisher": "Canonical",
-      "offer": "UbuntuServer",
-      "sku": "16.04-LTS",
-      "version": "latest"
-    },
-    "debian9": {
-      "publisher": "credativ",
-      "offer": "Debian",
-      "sku": "9",
-      "version": "latest"
-    },
-    "installScriptURL": "https://raw.githubusercontent.com/werton13/setup-ipsec-vpn/master/azure/install.sh",
-    "installCommand": "[concat('sh install.sh ', variables('quote'), parameters('preSharedKey'), variables('quote'),
-                                            ' ', variables('quote'), parameters('username'), variables('quote'), 
-                                            ' ', variables('quote'), parameters('password'), variables('quote'),
-                                            ' ', variables('quote'), parameters('onPremGwIP'), variables('quote'),
-                                            ' ', variables('quote'), parameters('vpnLeftSubnet'), variables('quote'),
-                                            ' ', variables('quote'), parameters('vpnLeftID'), variables('quote'),
-                                            ' ', variables('quote'), parameters('vpnRightSubnet'), variables('quote'),
-                                            ' ', variables('quote'), parameters('vpnConName'), variables('quote'),
-                                            ' ', variables('quote'), parameters('vpnIpSecKeyExchange'), variables('quote'),
-                                            ' ', variables('quote'), parameters('vpnIpSecIKEv2'), variables('quote'),
-                                            ' ', variables('quote'), parameters('vpnIpSecIKEPhaze1'), variables('quote'),
-                                            ' ', variables('quote'), parameters('vpnIpSecIKEPhaze2ESP'), variables('quote'),
-                                            ' ', variables('quote'), parameters('vpnIpSecIKEPhaze2Alg'), variables('quote'),
-                                            ' ', variables('quote'), parameters('vpnIpSecPFS'), variables('quote'))]"
-  },
-  "resources": [
-    {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('storageName')]",
-      "apiVersion": "2016-01-01",
-      "location": "[variables('location')]",
-      "tags": {
-        "displayName": "StorageAccount"
-      },
-      "properties": {},
-      "sku": {
-        "name": "[variables('vhdStorageType')]"
-      },
-      "kind": "Storage"
-    },
-
-    {
-      "apiVersion": "[variables('apiVersion')]",
-      "type": "Microsoft.Network/networkInterfaces",
-      "name": "[concat(variables('vmName'), 'nic')]",
-      "location": "[resourceGroup().location]",
-      "tags": {
-        "displayName": "NetworkInterface"
-      },
-      "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', concat(variables('virtualNetworkName')))]",
-        "[concat('Microsoft.Network/publicIPAddresses/', concat(variables('vmName'), 'pip'))]",
-        "[concat('Microsoft.Network/networkSecurityGroups/', concat(variables('vmName'), 'nsg'))]"
-      ],
-      "properties": {
-        "ipConfigurations": [
-          {
-            "name": "ipconfig1",
-            "properties": {
-              "privateIPAllocationMethod": "Dynamic",
-              "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('vmName'), 'pip'))]"
-              },
-              "subnet": {
-                "id": "[variables('subnetRef')]"
-              }
+    "$schema": "https://schema.management.azure.com/schemas/2018-05-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "username": {
+            "defaultValue": "vpngwadmin",
+            "minLength": 1,
+            "type": "String",
+            "metadata": {
+                "description": "Username for VPN and SSH"
             }
-          }
-        ],
-        "networkSecurityGroup": {
-          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(variables('vmName'), 'nsg'))]"
+        },
+        "password": {
+            "type": "SecureString",
+            "metadata": {
+                "description": "Password for VPN and SSH"
+            }
+        },
+        "preSharedKey": {
+            "type": "SecureString",
+            "metadata": {
+                "description": "IPsec Pre-Shared Key for VPN"
+            }
+        },
+        "onPremGwIP": {
+            "type": "String",
+            "metadata": {
+                "description": "Public IP of OnPremise IPSec VPN Device"
+            }
+        },
+        "vpnLeftSubnet": {
+            "type": "String",
+            "metadata": {
+                "description": "Please specify here subnet on local  to  this VPN gateway"
+            }
+        },
+        "vpnLeftID": {
+            "type": "String",
+            "metadata": {
+                "description": "here should be Public IP of this VPN gateway"
+            }
+        },
+        "vpnRightSubnet": {
+            "type": "String",
+            "metadata": {
+                "description": "Please specify here subnet behing on-Premise VPN gateway"
+            }
+        },
+        "vpnConName": {
+            "type": "String",
+            "metadata": {
+                "description": "Please specify here name of VPN connection between clous and on premise"
+            }
+        },
+        "vpnIpSecKeyExchange": {
+            "defaultValue": "ike",
+            "allowedValues": [
+                "ike"
+            ],
+            "type": "String",
+            "metadata": {
+                "description": "IPSec keyexchange mode - by default - ike"
+            }
+        },
+        "vpnIpSecIKEv2": {
+            "defaultValue": "yes",
+            "allowedValues": [
+                "yes",
+                "no"
+            ],
+            "type": "String",
+            "metadata": {
+                "description": "IKEv2 enabled or Not"
+            }
+        },
+        "vpnIpSecIKEPhaze1": {
+            "defaultValue": "aes256-sha2;dh2",
+            "allowedValues": [
+                "aes256-sha2;dh2"
+            ],
+            "type": "String",
+            "metadata": {
+                "description": "Choose sipher algoritms for IKE Phaze 1"
+            }
+        },
+        "vpnIpSecIKEPhaze2ESP": {
+            "defaultValue": "esp",
+            "allowedValues": [
+                "esp"
+            ],
+            "type": "String",
+            "metadata": {
+                "description": "esp enabled or Not"
+            }
+        },
+        "vpnIpSecIKEPhaze2Alg": {
+            "defaultValue": "aes256-sha256-modp1024",
+            "allowedValues": [
+                "aes256-sha256-modp1024"
+            ],
+            "type": "String",
+            "metadata": {
+                "description": "Choose sipher algoritms for IKE Phaze 2"
+            }
+        },
+        "vpnIpSecPFS": {
+            "defaultValue": "yes",
+            "allowedValues": [
+                "yes",
+                "no"
+            ],
+            "type": "String",
+            "metadata": {
+                "description": "esp enabled or Not"
+            }
+        },
+        "image": {
+            "defaultValue": "ubuntu1804",
+            "allowedValues": [
+                "ubuntu1804",
+                "ubuntu1604",
+                "debian9"
+            ],
+            "type": "String",
+            "metadata": {
+                "description": "OS to use. Debian 9 or Ubuntu 18.04/16.04 LTS"
+            }
+        },
+        "VMSize": {
+            "defaultValue": "Standard_D1_v2",
+            "allowedValues": [
+                "Standard_A1_v2",
+                "Standard_D1_v2",
+                "Standard_D2_v2"
+            ],
+            "type": "String",
+            "metadata": {
+                "description": "The size of the Virtual Machine."
+            }
+        },
+        "virtualNetworkName": {
+            "type": "String",
+            "metadata": {
+                "description": "Please enter existing virtual network name to place this VM"
+            }
+        },
+        "subnetname": {
+            "type": "String",
+            "metadata": {
+                "description": "Please enter existing virtual network Subnet name to place this VM"
+            }
         }
-      }
     },
-    {
-      "type": "Microsoft.Compute/virtualMachines",
-      "name": "[variables('vmName')]",
-      "apiVersion": "2016-03-30",
-      "location": "[resourceGroup().location]",
-      "tags": {
-        "displayName": "VirtualMachine"
-      },
-      "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', concat(variables('vmName'), 'nic'))]"
-      ],
-      "properties": {
-        "hardwareProfile": {
-          "vmSize": "[parameters('vmSize')]"
+    "variables": {
+        "quote": "'",
+        "location": "[resourceGroup().location]",
+        "vmName": "vpn-gw",
+        "virtualNetworkName": "[parameters('virtualNetworkName')]",
+        "addressPrefix": "10.0.0.0/16",
+        "subnetName": "[parameters('subnetName')]",
+        "subnetPrefix": "10.0.1.0/24",
+        "apiVersion": "2015-06-15",
+        "storageName": "[concat(uniqueString(resourceGroup().id), 'vpnsa')]",
+        "vhdStorageType": "Standard_LRS",
+        "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
+        "SubnetRef": "[concat(variables('vnetId'), '/subnets/', variables('subnetName'))]",
+        "ubuntu1804": {
+            "publisher": "Canonical",
+            "offer": "UbuntuServer",
+            "sku": "18.04-LTS",
+            "version": "latest"
         },
-        "osProfile": {
-          "computerName": "[variables('vmName')]",
-          "adminUsername": "[parameters('username')]",
-          "adminPassword": "[parameters('password')]"
+        "ubuntu1604": {
+            "publisher": "Canonical",
+            "offer": "UbuntuServer",
+            "sku": "16.04-LTS",
+            "version": "latest"
         },
-        "storageProfile": {
-          "imageReference": "[variables(parameters('image'))]",
-          "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts/', variables('storageName'))).primaryEndpoints.blob, 'vmachines/', variables('vmName'), '.vhd')]"              
+        "debian9": {
+            "publisher": "credativ",
+            "offer": "Debian",
+            "sku": "9",
+            "version": "latest"
+        },
+        "installScriptURL": "https://raw.githubusercontent.com/werton13/setup-ipsec-vpn/master/azure/install.sh",
+        "installCommand": "[concat('sh install.sh ', variables('quote'), parameters('preSharedKey'), variables('quote'),' ', variables('quote'), parameters('username'), variables('quote'),                         ' ', variables('quote'), parameters('password'), variables('quote'),' ', variables('quote'), parameters('onPremGwIP'), variables('quote'),' ', variables('quote'), parameters('vpnLeftSubnet'), variables('quote'),' ', variables('quote'), parameters('vpnLeftID'), variables('quote'),  ' ', variables('quote'), parameters('vpnRightSubnet'), variables('quote'),  ' ', variables('quote'), parameters('vpnConName'), variables('quote'),  ' ', variables('quote'), parameters('vpnIpSecKeyExchange'), variables('quote'), ' ', variables('quote'), parameters('vpnIpSecIKEv2'), variables('quote'), ' ', variables('quote'), parameters('vpnIpSecIKEPhaze1'), variables('quote'), ' ', variables('quote'), parameters('vpnIpSecIKEPhaze2ESP'), variables('quote'), ' ', variables('quote'), parameters('vpnIpSecIKEPhaze2Alg'), variables('quote'),  ' ', variables('quote'), parameters('vpnIpSecPFS'), variables('quote'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "sku": {
+                "name": "[variables('vhdStorageType')]"
             },
-            "caching": "ReadWrite",
-            "createOption": "FromImage"
-          }
+            "kind": "Storage",
+            "name": "[variables('storageName')]",
+            "apiVersion": "2016-01-01",
+            "location": "[variables('location')]",
+            "tags": {
+                "displayName": "StorageAccount"
+            },
+            "properties": {}
         },
-        "networkProfile": {
-          "networkInterfaces": [
-            {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('vmName'), 'nic'))]"
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[concat(variables('vmName'), 'nic')]",
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "displayName": "NetworkInterface"
+            },
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('vmName'), 'pip'))]"
+                            },
+                            "subnet": {
+                                "id": "[variables('subnetRef')]"
+                            }
+                        }
+                    }
+                ],
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(variables('vmName'), 'nsg'))]"
+                }
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Network/publicIPAddresses/', concat(variables('vmName'), 'pip'))]",
+                "[concat('Microsoft.Network/networkSecurityGroups/', concat(variables('vmName'), 'nsg'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[variables('vmName')]",
+            "apiVersion": "2016-03-30",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "displayName": "VirtualMachine"
+            },
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('vmSize')]"
+                },
+                "osProfile": {
+                    "computerName": "[variables('vmName')]",
+                    "adminUsername": "[parameters('username')]",
+                    "adminPassword": "[parameters('password')]"
+                },
+                "storageProfile": {
+                    "imageReference": "[variables(parameters('image'))]",
+                    "osDisk": {
+                        "name": "osdisk",
+                        "vhd": {
+                            "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts/', variables('storageName'))).primaryEndpoints.blob, 'vmachines/', variables('vmName'), '.vhd')]"
+                        },
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('vmName'), 'nic'))]"
+                        }
+                    ]
+                }
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkInterfaces/', concat(variables('vmName'), 'nic'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(variables('vmName'),'/installcustomscript')]",
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "displayName": "VirtualMachineCustomScriptExtension"
+            },
+            "properties": {
+                "publisher": "Microsoft.Azure.Extensions",
+                "type": "CustomScript",
+                "typeHandlerVersion": "2.0",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "fileUris": [
+                        "[variables('installScriptURL')]"
+                    ],
+                    "commandToExecute": "[variables('installCommand')]"
+                }
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[concat(variables('vmName'), 'nsg')]",
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "displayName": "NetworkSecurityGroup"
+            },
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "default-ssh",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1000,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "default-udp-500",
+                        "properties": {
+                            "protocol": "Udp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "500",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 2000,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "default-udp-4500",
+                        "properties": {
+                            "protocol": "Udp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "4500",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 2001,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
             }
-          ]
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[concat(variables('vmName'), 'pip')]",
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "displayName": "PublicIPAddress"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Static"
+            }
         }
-      } 
-    },
-    {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('vmName'),'/installcustomscript')]",
-      "apiVersion": "[variables('apiVersion')]",
-      "location": "[resourceGroup().location]",
-      "tags": {
-        "displayName": "VirtualMachineCustomScriptExtension"
-      },
-      "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
-      ],
-      "properties": {
-        "publisher": "Microsoft.Azure.Extensions",
-        "type": "CustomScript",
-        "typeHandlerVersion": "2.0",
-        "autoUpgradeMinorVersion": true,
-        "settings": {
-          "fileUris": [ "[variables('installScriptURL')]" ],
-          "commandToExecute": "[variables('installCommand')]"
+    ],
+    "outputs": {
+        "Public IP": {
+            "type": "String",
+            "value": "[reference(concat(variables('vmName'), 'pip')).ipAddress]"
         }
-      }
-    },
-    {
-      "type": "Microsoft.Network/networkSecurityGroups",
-      "name": "[concat(variables('vmName'), 'nsg')]",
-      "tags": {
-        "displayName": "NetworkSecurityGroup"
-      },
-      "apiVersion": "[variables('apiVersion')]",
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "securityRules": [
-          {
-            "name": "default-ssh",
-            "properties": {
-              "protocol": "Tcp",
-              "sourcePortRange": "*",
-              "destinationPortRange": "22",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 1000,
-              "direction": "Inbound"
-            }
-          },
-          {
-            "name": "default-udp-500",
-            "properties": {
-              "protocol": "Udp",
-              "sourcePortRange": "*",
-              "destinationPortRange": "500",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 2000,
-              "direction": "Inbound"
-            }
-          },
-          {
-            "name": "default-udp-4500",
-            "properties": {
-              "protocol": "Udp",
-              "sourcePortRange": "*",
-              "destinationPortRange": "4500",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 2001,
-              "direction": "Inbound"
-            }
-          }
-        ]
-      }
-    },
-    {
-      "apiVersion": "[variables('apiVersion')]",
-      "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[concat(variables('vmName'), 'pip')]",
-      "location": "[resourceGroup().location]",
-      "tags": {
-        "displayName": "PublicIPAddress"
-      },
-      "properties": {
-        "publicIPAllocationMethod": "Static"
-      }
     }
-  ],
-  "outputs": {
-    "Public IP": {
-      "type": "string",
-      "value": "[reference(concat(variables('vmName'), 'pip')).ipAddress]"
-    }
-  }
 }
