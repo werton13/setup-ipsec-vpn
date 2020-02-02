@@ -1,20 +1,6 @@
 # I workin on a litle modifications to this script to make it more parametrizied
 # as i intend to call this scrip from my ARM template in which i want to let the user choose IPSec parameters, 
 # remote GW IP and specify on-premise and cloud related networks
-
-
-werton13
-/
-setup-ipsecs2s-vpn
-forked from hwdsl2/setup-ipsec-vpn
-0
-03.4k
- Code Pull requests 0 Actions Projects 0 Security Insights Settings
-setup-ipsecs2s-vpn/vpnsetup.sh
-@hwdsl2 hwdsl2 Improve OS detection
-4360737 19 days ago
-@hwdsl2@dsoprea@aofei@kendfinger@abuango@DL6ER
-Executable File  524 lines (434 sloc)  15 KB
   
 #!/bin/sh
 #
