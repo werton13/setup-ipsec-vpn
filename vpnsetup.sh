@@ -278,7 +278,7 @@ config setup
 conn $VPN_CONNAME
   authby=secret
   left=%defaultroute
-  leftid=$VPN_RMGWIP
+  leftid=$VPN_LEFTID
   leftsubnet=$VPN_LEFTSUBNET
 
   right=$VPN_RMGWIP
