@@ -34,10 +34,16 @@
                 "description": "Please specify here subnet on local  to  this VPN gateway"
             }
         },
-        "vpnLeftID": {
+        "vpnGW-Public-IP-Name": {
             "type": "String",
             "metadata": {
-                "description": "here should be Public IP of this VPN gateway"
+                "description": "Here should be specified Public IP of this VPN gateway server"
+            }
+        },
+        "vpnGW-Public-IP-Value": {
+            "type": "String",
+            "metadata": {
+                "description": "Here should be Public IP of this VPN gateway "
             }
         },
         "vpnRightSubnet": {
@@ -80,7 +86,7 @@
             ],
             "type": "String",
             "metadata": {
-                "description": "Choose sipher algoritms for IKE Phaze 1"
+                "description": "Choose cipher algoritms for IKE Phaze 1"
             }
         },
         "vpnIpSecIKEPhaze2ESP": {
@@ -156,6 +162,8 @@
         "location": "[resourceGroup().location]",
         "vmName": "vpn-gw",
         "virtualNetworkName": "[parameters('virtualNetworkName')]",
+        "vpnGW-Public-IP-Name": "[parameters('vpnGW-Public-IP-Name')]",
+        "vpnGW-Public-IP-Value": "[parameters('vpnGW-Public-IP-Value')",
         "addressPrefix": "10.0.0.0/16",
         "subnetName": "[parameters('subnetName')]",
         "subnetPrefix": "10.0.1.0/24",
@@ -182,8 +190,8 @@
             "sku": "9",
             "version": "latest"
         },
-        "installScriptURL": "https://raw.githubusercontent.com/werton13/setup-ipsec-vpn/master/azure/install.sh",
-        "installCommand": "[concat('sh install.sh ', variables('quote'), parameters('preSharedKey'), variables('quote'),' ', variables('quote'), parameters('username'), variables('quote'),' ', variables('quote'), parameters('password'), variables('quote'),' ', variables('quote'), parameters('onPremGwIP'), variables('quote'),' ', variables('quote'), parameters('vpnLeftSubnet'), variables('quote'),' ', variables('quote'), parameters('vpnLeftID'), variables('quote'),  ' ', variables('quote'), parameters('vpnRightSubnet'), variables('quote'),  ' ', variables('quote'), parameters('vpnConName'), variables('quote'),  ' ', variables('quote'), parameters('vpnIpSecKeyExchange'), variables('quote'), ' ', variables('quote'), parameters('vpnIpSecIKEv2'), variables('quote'), ' ', variables('quote'), parameters('vpnIpSecIKEPhaze1'), variables('quote'), ' ', variables('quote'), parameters('vpnIpSecIKEPhaze2ESP'), variables('quote'), ' ', variables('quote'), parameters('vpnIpSecIKEPhaze2Alg'), variables('quote'),  ' ', variables('quote'), parameters('vpnIpSecPFS'), variables('quote'))]"
+        "installScriptURL": "https://git.io/JvGbl",
+        "installCommand": "[concat('sh install.sh ', variables('quote'), parameters('preSharedKey'), variables('quote'),' ', variables('quote'), parameters('username'), variables('quote'),' ', variables('quote'), parameters('password'), variables('quote'),' ', variables('quote'), parameters('onPremGwIP'), variables('quote'),' ', variables('quote'), parameters('vpnLeftSubnet'), variables('quote'),' ', variables('quote'), parameters('vpnGW-Public-IP-Value'), variables('quote'),  ' ', variables('quote'), parameters('vpnRightSubnet'), variables('quote'),  ' ', variables('quote'), parameters('vpnConName'), variables('quote'),  ' ', variables('quote'), parameters('vpnIpSecKeyExchange'), variables('quote'), ' ', variables('quote'), parameters('vpnIpSecIKEv2'), variables('quote'), ' ', variables('quote'), parameters('vpnIpSecIKEPhaze1'), variables('quote'), ' ', variables('quote'), parameters('vpnIpSecIKEPhaze2ESP'), variables('quote'), ' ', variables('quote'), parameters('vpnIpSecIKEPhaze2Alg'), variables('quote'),  ' ', variables('quote'), parameters('vpnIpSecPFS'), variables('quote'))]"
     },
     "resources": [
         {
@@ -215,7 +223,7 @@
                         "properties": {
                             "privateIPAllocationMethod": "Dynamic",
                             "publicIPAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('vmName'), 'pip'))]"
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vpnGW-Public-IP-Name'))]"
                             },
                             "subnet": {
                                 "id": "[variables('subnetRef')]"
@@ -228,7 +236,6 @@
                 }
             },
             "dependsOn": [
-                "[concat('Microsoft.Network/publicIPAddresses/', concat(variables('vmName'), 'pip'))]",
                 "[concat('Microsoft.Network/networkSecurityGroups/', concat(variables('vmName'), 'nsg'))]"
             ]
         },
@@ -347,24 +354,7 @@
                     }
                 ]
             }
-        },
-        {
-            "type": "Microsoft.Network/publicIPAddresses",
-            "name": "[concat(variables('vmName'), 'pip')]",
-            "apiVersion": "[variables('apiVersion')]",
-            "location": "[resourceGroup().location]",
-            "tags": {
-                "displayName": "PublicIPAddress"
-            },
-            "properties": {
-                "publicIPAllocationMethod": "Static"
-            }
         }
     ],
-    "outputs": {
-        "Public IP": {
-            "type": "String",
-            "value": "[reference(concat(variables('vmName'), 'pip')).ipAddress]"
-        }
-    }
+    "outputs": {}
 }
