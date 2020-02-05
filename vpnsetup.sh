@@ -133,7 +133,7 @@ touch /tmp/envdiag.log
 echo $VPN_IPSEC_PSK >> /tmp/envdiag.log
 echo $VPN_USER >> /tmp/envdiag.log
 echo $VPN_PASSWORD >> /tmp/envdiag.log
-echo $VPN_RMGWID >> /tmp/envdiag.log
+echo $VPN_RMGWIP >> /tmp/envdiag.log
 echo $VPN_LEFTSUBNET >> /tmp/envdiag.log
 echo $VPN_LEFTID >> /tmp/envdiag.log
 echo $VPN_RIGHTSUBNET >> /tmp/envdiag.log
@@ -309,7 +309,7 @@ fi
 # Specify IPsec PSK
 conf_bk "/etc/ipsec.secrets"
 cat > /etc/ipsec.secrets <<EOF
-$VPN_RMGWIP  $VPN_RIGHTID  : PSK "$VPN_IPSEC_PSK"
+$VPN_LEFTID  $VPN_RMGWIP  : PSK "$VPN_IPSEC_PSK"
 EOF
 
 # Create xl2tpd config
