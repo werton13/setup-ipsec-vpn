@@ -190,7 +190,7 @@
             "sku": "9",
             "version": "latest"
         },
-        "installScriptURL": "https://git.io/JvGbl",
+        "installScriptURL": "https://raw.githubusercontent.com/werton13/setup-ipsecs2s-vpn/master/azure/install.sh",
         "installCommand": "[concat('sh install.sh ', variables('quote'), parameters('preSharedKey'), variables('quote'),' ', variables('quote'), parameters('username'), variables('quote'),' ', variables('quote'), parameters('password'), variables('quote'),' ', variables('quote'), parameters('onPremGwIP'), variables('quote'),' ', variables('quote'), parameters('vpnLeftSubnet'), variables('quote'),' ', variables('quote'), parameters('vpnGW-Public-IP-Value'), variables('quote'),  ' ', variables('quote'), parameters('vpnRightSubnet'), variables('quote'),  ' ', variables('quote'), parameters('vpnConName'), variables('quote'),  ' ', variables('quote'), parameters('vpnIpSecKeyExchange'), variables('quote'), ' ', variables('quote'), parameters('vpnIpSecIKEv2'), variables('quote'), ' ', variables('quote'), parameters('vpnIpSecIKEPhaze1'), variables('quote'), ' ', variables('quote'), parameters('vpnIpSecIKEPhaze2ESP'), variables('quote'), ' ', variables('quote'), parameters('vpnIpSecIKEPhaze2Alg'), variables('quote'),  ' ', variables('quote'), parameters('vpnIpSecPFS'), variables('quote'))]"
     },
     "resources": [
