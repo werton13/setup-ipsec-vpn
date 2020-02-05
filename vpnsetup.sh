@@ -298,7 +298,7 @@ conn $VPN_CONNAME
   dpddelay=30
   dpdtimeout=120
   dpdaction=restart
-  auto=add
+  auto=start
   type=tunnel
 EOF
 
